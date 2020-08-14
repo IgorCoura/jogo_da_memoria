@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:jogo_da_memoria/models/my_app_bar.dart';
+import 'package:jogo_da_memoria/models/pontuacao.dart';
 
 class MyAppBarWidget extends StatelessWidget {
-  final MyAppBar appBar;
+  final Pontuacao pontuacao;
 
   MyAppBarWidget({
-    @required this.appBar,
+    @required this.pontuacao,
   });
 
   @override
@@ -24,7 +24,7 @@ class MyAppBarWidget extends StatelessWidget {
                 Expanded(
                   child: Container(
                     child: Row(
-                      children: [Text("Time: "), Text("0000")],
+                      children: [Text("Time: "), Text(pontuacao.time)],
                     ),
                   ),
                 ),
@@ -34,7 +34,7 @@ class MyAppBarWidget extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Text("Score: "),
-                        Text(this.appBar.score),
+                        Text(this.pontuacao.score),
                       ],
                     ),
                   ),

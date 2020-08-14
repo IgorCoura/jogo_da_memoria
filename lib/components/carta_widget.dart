@@ -13,12 +13,18 @@ class CartaWidget extends StatelessWidget {
   Widget estadoDaCarta() {
     if (carta.aberto) {
       return Container(
-        color: Colors.red,
+        decoration: BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Icon(carta.oneIcon),
       );
     } else {
       return Container(
-        color: Colors.red,
+        decoration: BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.circular(10),
+        ),
       );
     }
   }

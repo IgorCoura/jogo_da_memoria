@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:jogo_da_memoria/components/carta_widget.dart';
+import 'package:jogo_da_memoria/components/game_over.dart';
 import 'package:jogo_da_memoria/components/my_app_bar_widget.dart';
 import 'package:jogo_da_memoria/models/carta.dart';
-import 'package:jogo_da_memoria/models/my_app_bar.dart';
+import 'package:jogo_da_memoria/models/pontuacao.dart';
 import 'package:jogo_da_memoria/models/tabuleiro.dart';
 
 class GameApp extends StatefulWidget {
@@ -12,13 +15,20 @@ class GameApp extends StatefulWidget {
 
 class _GameAppState extends State<GameApp> {
   Tabuleiro _tabuleiro = Tabuleiro(colunas: 5, linhas: 7);
-  MyAppBar _appBar = MyAppBar();
-  Carta cartaAnterior;
+  Pontuacao _pontuacao = Pontuacao();
+  Carta _cartaAnterior;
+  bool _timeAtivado = false;
 
   void _abrir(Carta carta) {
-    if (cartaAnterior != null) {
-      if (cartaAnterior == carta) {
-        print("object");
+    if (_pontuacao.gameOver) {
+      return;
+    }
+    if (!_timeAtivado) {
+      _updateTime();
+      _timeAtivado = true;
+    }
+    if (_cartaAnterior != null) {
+      if (_cartaAnterior == carta) {
         return;
       }
       setState(() {
@@ -26,53 +36,88 @@ class _GameAppState extends State<GameApp> {
       });
       Future.delayed(Duration(milliseconds: 500), () {
         setState(() {
-          if (cartaAnterior.numIconRandom == carta.numIconRandom) {
+          if (_cartaAnterior.numIconRandom == carta.numIconRandom) {
             carta.esconder();
-            cartaAnterior.esconder();
-            _appBar.addScore();
+            _cartaAnterior.esconder();
+            _pontuacao.addScore();
+            _pontuacao.addSeconds();
           }
           _tabuleiro.fecharAll();
-          cartaAnterior = null;
+          _cartaAnterior = null;
           if (_tabuleiro.reiniciarTabela) {
-            _reniciar();
+            _reniciarTabuleiro();
           }
         });
       });
     } else {
       setState(() {
         carta.abrir();
-        cartaAnterior = carta;
+        _cartaAnterior = carta;
       });
     }
   }
 
-  void _reniciar() {
+  void _reniciarTabuleiro() {
     _tabuleiro = new Tabuleiro(linhas: 7, colunas: 5);
+    _pontuacao.multPontuacao();
+  }
+
+  void _updateTime() {
+    setState(() {
+      Timer(Duration(seconds: 1), () {
+        setState(() {
+          _pontuacao.fimDoTempo();
+        });
+        _pontuacao.secondsAdd();
+        if (_pontuacao.gameOver) {
+          return;
+        }
+        _updateTime();
+      });
+    });
+  }
+
+  void _reiniciarGame() {
+    setState(() {
+      _tabuleiro = new Tabuleiro(linhas: 7, colunas: 5);
+      _pontuacao = new Pontuacao();
+      _timeAtivado = false;
+      _cartaAnterior = null;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        backgroundColor: Colors.black,
-        appBar: AppBar(
-          title: MyAppBarWidget(
-            appBar: _appBar,
+      home: Stack(
+        alignment: Alignment.center,
+        children: [
+          Scaffold(
+            backgroundColor: Colors.black,
+            appBar: AppBar(
+              title: MyAppBarWidget(
+                pontuacao: _pontuacao,
+              ),
+              backgroundColor: Colors.red,
+            ),
+            body: Container(
+              child: GridView.count(
+                crossAxisCount: _tabuleiro.getColunas(),
+                children: _tabuleiro.getListaCartas().map((e) {
+                  return CartaWidget(
+                    carta: e,
+                    onAbrir: _abrir,
+                  );
+                }).toList(),
+              ),
+            ),
           ),
-          backgroundColor: Colors.red,
-        ),
-        body: Container(
-          child: GridView.count(
-            crossAxisCount: _tabuleiro.getColunas(),
-            children: _tabuleiro.getListaCartas().map((e) {
-              return CartaWidget(
-                carta: e,
-                onAbrir: _abrir,
-              );
-            }).toList(),
+          GameOver(
+            onReiniciar: _reiniciarGame,
+            pontuacaoFinal: _pontuacao,
           ),
-        ),
+        ],
       ),
     );
   }
