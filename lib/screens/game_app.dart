@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:jogo_da_memoria/components/carta_widget.dart';
+import 'package:flutter/services.dart';
 import 'package:jogo_da_memoria/components/game_over.dart';
 import 'package:jogo_da_memoria/components/my_app_bar_widget.dart';
+import 'package:jogo_da_memoria/components/tabuleiro_widget.dart';
 import 'package:jogo_da_memoria/models/carta.dart';
 import 'package:jogo_da_memoria/models/pontuacao.dart';
 import 'package:jogo_da_memoria/models/tabuleiro.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class GameApp extends StatefulWidget {
   @override
@@ -14,10 +16,21 @@ class GameApp extends StatefulWidget {
 }
 
 class _GameAppState extends State<GameApp> {
-  Tabuleiro _tabuleiro = Tabuleiro(colunas: 5, linhas: 7);
+  Tabuleiro _tabuleiro;
   Pontuacao _pontuacao = Pontuacao();
   Carta _cartaAnterior;
   bool _timeAtivado = false;
+  int _linhas, _colunas, _record;
+
+  Tabuleiro _getTabuleiro(double altura, double largura) {
+    _colunas = 5;
+    double tamanhoCampo = largura / _colunas;
+    _linhas = (altura / tamanhoCampo).floor();
+    if (_tabuleiro == null) {
+      _tabuleiro = Tabuleiro(linhas: _linhas, colunas: _colunas);
+    }
+    return _tabuleiro;
+  }
 
   void _abrir(Carta carta) {
     if (_pontuacao.gameOver) {
@@ -58,7 +71,7 @@ class _GameAppState extends State<GameApp> {
   }
 
   void _reniciarTabuleiro() {
-    _tabuleiro = new Tabuleiro(linhas: 7, colunas: 5);
+    _tabuleiro = new Tabuleiro(linhas: _linhas, colunas: _colunas);
     _pontuacao.multPontuacao();
   }
 
@@ -70,6 +83,8 @@ class _GameAppState extends State<GameApp> {
         });
         _pontuacao.secondsAdd();
         if (_pontuacao.gameOver) {
+          _novoRecord(_pontuacao.scoreInt);
+          _pegarRecord();
           return;
         }
         _updateTime();
@@ -79,15 +94,32 @@ class _GameAppState extends State<GameApp> {
 
   void _reiniciarGame() {
     setState(() {
-      _tabuleiro = new Tabuleiro(linhas: 7, colunas: 5);
+      _tabuleiro = new Tabuleiro(linhas: _linhas, colunas: _colunas);
       _pontuacao = new Pontuacao();
       _timeAtivado = false;
       _cartaAnterior = null;
     });
   }
 
+  void _novoRecord(int score) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      if ((prefs.getInt('record') ?? 0) < score) {
+        prefs.setInt('record', score);
+      }
+    });
+  }
+
+  void _pegarRecord() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _record = (prefs.getInt('record') ?? 0);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Stack(
@@ -101,21 +133,20 @@ class _GameAppState extends State<GameApp> {
               ),
               backgroundColor: Colors.red,
             ),
-            body: Container(
-              child: GridView.count(
-                crossAxisCount: _tabuleiro.getColunas(),
-                children: _tabuleiro.getListaCartas().map((e) {
-                  return CartaWidget(
-                    carta: e,
-                    onAbrir: _abrir,
-                  );
-                }).toList(),
-              ),
-            ),
+            body: LayoutBuilder(builder: (ctx, constraints) {
+              return TabuleiroWidget(
+                tabuleiro: _getTabuleiro(
+                  constraints.maxHeight,
+                  constraints.maxWidth,
+                ),
+                onAbrir: _abrir,
+              );
+            }),
           ),
           GameOver(
             onReiniciar: _reiniciarGame,
             pontuacaoFinal: _pontuacao,
+            record: _record,
           ),
         ],
       ),

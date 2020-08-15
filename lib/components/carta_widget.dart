@@ -3,7 +3,7 @@ import 'package:jogo_da_memoria/models/carta.dart';
 
 class CartaWidget extends StatelessWidget {
   final Carta carta;
-  final Function(Carta) onAbrir;
+  final void Function(Carta) onAbrir;
 
   CartaWidget({
     @required this.carta,

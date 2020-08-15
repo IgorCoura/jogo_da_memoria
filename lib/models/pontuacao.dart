@@ -10,8 +10,8 @@ class Pontuacao {
   }
 
   void multPontuacao() {
-    _multPontuacao *= 2;
-    _addSeconds ~/= 2;
+    _multPontuacao *= 4;
+    _addSeconds = (_addSeconds * 0.80).toInt();
   }
 
   void addSeconds() {
@@ -22,7 +22,7 @@ class Pontuacao {
     _seconds--;
   }
 
-  void fimDoTempo() {
+  void fimDoTempo() async {
     if (_seconds <= 0) {
       _gameOver = true;
     }
@@ -38,6 +38,10 @@ class Pontuacao {
     } else {
       return _score.toString();
     }
+  }
+
+  int get scoreInt {
+    return _score;
   }
 
   String get time {

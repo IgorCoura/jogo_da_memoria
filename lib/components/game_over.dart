@@ -3,12 +3,26 @@ import 'package:jogo_da_memoria/models/pontuacao.dart';
 
 class GameOver extends StatelessWidget {
   final Pontuacao pontuacaoFinal;
-  final Function() onReiniciar;
+  final void Function() onReiniciar;
+  final int record;
 
   GameOver({
     @required this.pontuacaoFinal,
     @required this.onReiniciar,
+    @required this.record,
   });
+
+  String get _recordToString {
+    if (record < 10) {
+      return "000" + record.toString();
+    } else if (record < 100) {
+      return "00" + record.toString();
+    } else if (record < 1000) {
+      return "0" + record.toString();
+    } else {
+      return record.toString();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +91,7 @@ class GameOver extends StatelessWidget {
                                       ),
                                     ),
                                     Text(
-                                      " " + "0000",
+                                      " " + _recordToString,
                                       style: TextStyle(
                                         fontSize: 22,
                                         decoration: TextDecoration.none,
